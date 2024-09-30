@@ -1,0 +1,29 @@
+name: "ndsblc Build"
+on: 
+  push:
+    branches:
+      - macOS_workflow
+  pull_request:
+    branches: 
+      - '*'
+  workflow_dispatch:
+jobs:
+  macOS:
+    name: Build on macOS
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build
+        run: |
+          make MAC_ARM=1
+          make clean
+          make MAC_X86=1
+          lipo -create -output ndsblc x86_app arm_app
+          mkdir output
+          cp ndsblc output/ndsblc
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: ndsblc_macOS
+          path: output

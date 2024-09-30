@@ -10,20 +10,11 @@ ifneq (,$(findstring MINGW,$(UNAME))$(findstring CYGWIN,$(UNAME)))
 	TARGET_EXT = .exe
 endif
 
-
 ######################################
 # building variables
 ######################################
 # optimization
-OPT = -O3
-
-
-#######################################
-# paths
-#######################################
-# Build path
-BUILD_DIR = build
-
+OPT = -Os
 
 ######################################
 # source
@@ -31,55 +22,44 @@ BUILD_DIR = build
 # C sources
 C_SOURCES =  $(wildcard src/*.c)
 
-
-#######################################
-# binaries
-#######################################
-CC = gcc
-
-
 #######################################
 # CFLAGS
 #######################################
 # C includes
-C_INCLUDES =  \
+C_INCLUDES = \
 -Iinc
 
 # compile gcc flags
 CFLAGS = $(C_INCLUDES) $(OPT) -Wall
-
 
 #######################################
 # LDFLAGS
 #######################################
 LDFLAGS =
 
+ifeq ($(MAC_ARM),1)
+	CFLAGS += -target arm64-apple-macos11
+	TARGET = arm_app
+endif
+ifeq ($(MAC_X86),1)
+	CFLAGS += -target x86_64-apple-macos10.12
+	TARGET = x86_app
+endif
+
 # default action: build all
 all: $(TARGET)
-
 
 #######################################
 # build the application
 #######################################
 # list of objects
-OBJECTS = $(addprefix $(BUILD_DIR)/,$(notdir $(C_SOURCES:.c=.o)))
-vpath %.c $(sort $(dir $(C_SOURCES)))
+OBJECTS = src/crc16.o src/main.o src/create-bootloader.o
 
-$(BUILD_DIR)/%.o: %.c Makefile | $(BUILD_DIR) 
-	@$(CC) -c $(CFLAGS) $< -o $@
-
-$(TARGET): $(OBJECTS) Makefile
-	@$(CC) $(OBJECTS) $(LDFLAGS) -o $@
-
-$(BUILD_DIR):
-	@mkdir $@
-
+$(TARGET): $(OBJECTS)
+	$(CC) $(CFLAGS) $(OBJECTS) $(LDFLAGS) -o $@
 
 #######################################
 # clean up
 #######################################
 clean:
-	@rm -Rf $(BUILD_DIR) $(TARGET)$(TARGET_EXT)
-
-
-# *** EOF ***
+	@rm -rf $(OBJECTS) $(TARGET) $(TARGET_EXT)
